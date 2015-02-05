@@ -82,7 +82,23 @@ mem=$(sysctl -n hw.memsize)
 ram="$((mem/1073741824)) GB"
 
 ## Disk usage
-disk=`df | head -2 | tail -1 | awk '{print $5}'`
+disk=`python - <<ENDOFINPUT
+
+import subprocess,re # standard stuff
+import bitmath # someday I won't bother with this. Until, then, pip install ...
+
+def getDriveStats():
+  output=subprocess.Popen("df -k".split(),stdout=subprocess.PIPE)
+  result=output.communicate()[0]
+  return re.findall("(?:disk\S+\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+)",result)
+
+result=[map(lambda x:bitmath.parse_string(x+"KiB"),n) for n in getDriveStats()]
+
+total,used=map(lambda x:reduce(lambda y,z:y+z,x),zip(*result)) # Am I overcomplicating this?
+
+print "{:.2%} of {:,.2f} TB".format(used/total,float(total.to_TB()))
+
+ENDOFINPUT` ##
 
 # Add a -c option to enable classic color logo
 if [[ $1 == "-c" ]]; then
@@ -110,7 +126,7 @@ ${RED}    ####################              Terminal $terminal
 ${RED}    #####################             Packages $packages
 ${PURPLE}     ######################           CPU: $cpu
 ${PURPLE}      ####################            Memory: $ram
-${BLUE}        ################              Disk Used: $disk
+${BLUE}        ################              Total Disk Use: $disk
 ${BLUE}         ####     #####               Internal IP: $ipAddress
 
 "
