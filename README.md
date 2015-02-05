@@ -14,6 +14,7 @@ Installation
     $ cd archey-osx/
     $ sudo chmod +x bin/archey
     $ ln -s $PWD/bin/archey /usr/local/bin/archey
+    $ pip install bitmath
     $ archey
  
 Thanks
